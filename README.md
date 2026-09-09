@@ -44,6 +44,7 @@ registry.
 ```powershell
 git clone <repository-url>
 Set-Location .\<cloned-repository-folder>
+code .
 Start-Process .\index.html
 ```
 
@@ -52,12 +53,20 @@ For example, if the GitHub repository is named `student-lab`:
 ```powershell
 git clone <repository-url>
 Set-Location .\student-lab
+code .
 Start-Process .\index.html
 ```
 
 Run all workbook commands from the folder containing `index.html`. Keep the
 same PowerShell window open because the lab variables exist only in that
 window.
+
+The workbook preflight downloads the cluster credentials into the student's
+local kubeconfig before running any `kubectl` commands:
+
+```powershell
+az aks get-credentials --name $AKS_NAME --resource-group $RESOURCE_GROUP
+```
 
 ## Included files
 

@@ -763,6 +763,7 @@ html[data-theme="dark"] {
 if ([string]::IsNullOrWhiteSpace($RESOURCE_GROUP)) { throw 'RESOURCE_GROUP is not set.' }
 if ([string]::IsNullOrWhiteSpace($AKS_NAME)) { throw 'AKS_NAME is not set.' }
 if ([string]::IsNullOrWhiteSpace($ACR_NAME)) { throw 'ACR_NAME is not set.' }
+code .
 $rg = $RESOURCE_GROUP
 $aksName = $AKS_NAME
 $acrName = $ACR_NAME
@@ -780,6 +781,7 @@ $hpaNs = 'aks-hpa-demo'
             <li>Open PowerShell in the cloned repository folder before running these commands.</li>
             <li><code>Get-Location</code> confirms the folder from which relative manifest paths will be resolved.</li>
             <li>The first three checks stop immediately with a clear message if an instructor-provided variable is missing.</li>
+            <li><code>code .</code> opens the current lab folder in Visual Studio Code so you can inspect the manifests while working through the exercises.</li>
             <li><code>$rg</code>, <code>$aksName</code>, and <code>$acrName</code> are short aliases for the supplied variables.</li>
             <li><code>$location</code> reads the cluster's Azure region instead of assuming one.</li>
             <li><code>$limitNs</code>, <code>$vpaNs</code>, and <code>$hpaNs</code> keep the namespace names easy to reuse.</li>
@@ -789,7 +791,7 @@ $hpaNs = 'aks-hpa-demo'
 
         <div class="callout expected">
           <strong>Expected output / evidence</strong>
-          <p><code>Get-Location</code> shows the cloned repository folder, and the final line prints the supplied AKS cluster, resource group, ACR, and detected Azure region.</p>
+          <p><code>Get-Location</code> shows the cloned repository folder, Visual Studio Code opens that folder, and the final line prints the supplied AKS cluster, resource group, ACR, and detected Azure region.</p>
         </div>
 
         <div class="callout warning">
@@ -830,15 +832,17 @@ $hpaNs = 'aks-hpa-demo'
           <div class="section-card">
             <h3>Why this matters</h3>
             <p>
-              HPA and VPA both depend on cluster metrics. VPA also needs Azure access if the add-on
-              is not already enabled. It is much easier to catch those prerequisites up front.
+              The Azure CLI must first add the cluster connection information to your local kubeconfig.
+              HPA and VPA both depend on cluster metrics. VPA also needs Azure access if the add-on is
+              not already enabled. It is much easier to catch those prerequisites up front.
             </p>
           </div>
         </div>
 
         <div class="command-card">
-          <div class="command-label">Confirm Azure and Kubernetes access</div>
+          <div class="command-label">Download the cluster credentials and confirm access</div>
           <pre><code>az account show --query user.name -o tsv
+az aks get-credentials --name $AKS_NAME --resource-group $RESOURCE_GROUP
 kubectl config current-context
 kubectl cluster-info
 kubectl get nodes
@@ -937,11 +941,21 @@ Select-String -Path .\manifests\*\*.yaml -Pattern 'image:'</code></pre>
           </div>
         </div>
 
+        <div class="callout info">
+          <strong>Review before deploying</strong>
+          <p>In VS Code, open <code>00-namespace.yaml</code> and review the namespace definition before applying it.</p>
+        </div>
+
         <div class="command-card">
           <div class="command-label">Create the namespace and inspect the label</div>
           <pre><code>kubectl apply -f .\manifests\01-limit-ranges-resource-quotas\00-namespace.yaml
 kubectl get namespace $limitNs --show-labels</code></pre>
           <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="callout info">
+          <strong>Review before deploying</strong>
+          <p>In VS Code, open <code>10-limit-range.yaml</code> and identify the default requests, default limits, and maximum values before applying it.</p>
         </div>
 
         <div class="command-card">
@@ -1032,12 +1046,22 @@ kubectl describe limitrange container-resource-limits -n $limitNs</code></pre>
           </div>
         </div>
 
+        <div class="callout info">
+          <strong>Review before deploying</strong>
+          <p>In VS Code, open <code>20-defaulted-pod.yaml</code> and confirm that the container does not define resource requests or limits.</p>
+        </div>
+
         <div class="command-card">
           <div class="command-label">Create a pod with no explicit resources and inspect the injected values</div>
           <pre><code>kubectl apply -f .\manifests\01-limit-ranges-resource-quotas\20-defaulted-pod.yaml
 kubectl wait --for=condition=Ready pod/defaulted-pod -n $limitNs --timeout=90s
 kubectl get pod defaulted-pod -n $limitNs -o jsonpath="{.spec.containers[0].resources}"</code></pre>
           <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="callout info">
+          <strong>Review before deploying</strong>
+          <p>In VS Code, open <code>30-over-limit-pod.yaml</code> and find the resource value that exceeds the LimitRange maximum.</p>
         </div>
 
         <div class="command-card">
@@ -1118,11 +1142,21 @@ kubectl get pod defaulted-pod -n $limitNs -o jsonpath="{.spec.containers[0].reso
           </div>
         </div>
 
+        <div class="callout info">
+          <strong>Review before deploying</strong>
+          <p>In VS Code, open <code>40-resource-quota.yaml</code> and review the namespace pod, CPU, and memory budgets.</p>
+        </div>
+
         <div class="command-card">
           <div class="command-label">Apply the ResourceQuota and inspect the budget</div>
           <pre><code>kubectl apply -f .\manifests\01-limit-ranges-resource-quotas\40-resource-quota.yaml
 kubectl describe resourcequota namespace-compute-quota -n $limitNs</code></pre>
           <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="callout info">
+          <strong>Review before deploying</strong>
+          <p>In VS Code, open <code>50-quota-workload.yaml</code> and compare its requested replica count and resources with the remaining quota.</p>
         </div>
 
         <div class="command-card">
@@ -1317,6 +1351,11 @@ $vpaEnabled = az aks show --resource-group $rg --name $aksName --query "workload
           </div>
         </div>
 
+        <div class="callout info">
+          <strong>Review before deploying</strong>
+          <p>In VS Code, review <code>00-namespace.yaml</code> and <code>10-workload.yaml</code>. Find the Deployment's starting CPU and memory requests before applying them.</p>
+        </div>
+
         <div class="command-card">
           <div class="command-label">Deploy the VPA demo workload and inspect the configured requests</div>
           <pre><code>kubectl apply -f .\manifests\02-vertical-pod-autoscaler\00-namespace.yaml
@@ -1395,6 +1434,11 @@ kubectl get pods -n $vpaNs -l app=weather-api -o custom-columns="POD:.metadata.n
               changing pods or risking surprise restarts.
             </p>
           </div>
+        </div>
+
+        <div class="callout info">
+          <strong>Review before deploying</strong>
+          <p>In VS Code, open <code>20-vpa-off.yaml</code> and review the update mode, target Deployment, and resource policy.</p>
         </div>
 
         <div class="command-card">
@@ -1485,12 +1529,26 @@ kubectl get vpa weather-api-vpa -n $vpaNs -o jsonpath="{.status.recommendation}"
           </div>
         </div>
 
+        <div class="callout info">
+          <strong>Review before deploying</strong>
+          <p>In VS Code, open <code>30-vpa-recreate.yaml</code> and identify what changes from the VPA Off-mode manifest before applying it.</p>
+        </div>
+
         <div class="command-card">
           <div class="command-label">Record the current pods, enable Recreate mode, and watch for new pod names</div>
           <pre><code>kubectl get pods -n $vpaNs -l app=weather-api
 kubectl apply -f .\manifests\02-vertical-pod-autoscaler\30-vpa-recreate.yaml
 kubectl get pods -n $vpaNs -l app=weather-api --watch</code></pre>
           <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="callout warning">
+          <strong>The watch command keeps running</strong>
+          <p>
+            Wait until you see an old pod terminate and a new pod appear. Then press
+            <code>Ctrl+C</code> to stop the watch and return to the PowerShell prompt before
+            running the next commands.
+          </p>
         </div>
 
         <div class="command-card">
@@ -1598,6 +1656,11 @@ kubectl top nodes</code></pre>
           <button class="copy" type="button">Copy</button>
         </div>
 
+        <div class="callout info">
+          <strong>Review before deploying</strong>
+          <p>In VS Code, review <code>00-namespace.yaml</code> and <code>10-workload.yaml</code>. Find the CPU request, Service, and application arguments used by the HPA demo.</p>
+        </div>
+
         <div class="command-card">
           <div class="command-label">Deploy the HPA demo workload and inspect the baseline</div>
           <pre><code>kubectl apply -f .\manifests\03-horizontal-pod-autoscaler\00-namespace.yaml
@@ -1606,6 +1669,20 @@ kubectl rollout status deployment/cpu-demo -n $hpaNs --timeout=120s
 kubectl get deployment,pods -n $hpaNs -o wide
 kubectl top pods -n $hpaNs</code></pre>
           <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="callout warning">
+          <strong>Pod metrics are not immediate</strong>
+          <p>
+            A newly started pod may take about a minute to appear in the Metrics API. If
+            <code>kubectl top pods -n $hpaNs</code> reports that metrics are unavailable, wait
+            30 to 60 seconds and rerun the command. You may need to retry it a few times.
+          </p>
+        </div>
+
+        <div class="callout info">
+          <strong>Review before deploying</strong>
+          <p>In VS Code, open <code>20-hpa.yaml</code> and identify the minimum replicas, maximum replicas, and CPU utilization target.</p>
         </div>
 
         <div class="command-card">
@@ -1690,6 +1767,11 @@ kubectl describe hpa cpu-demo -n $hpaNs</code></pre>
           </div>
         </div>
 
+        <div class="callout info">
+          <strong>Review before deploying</strong>
+          <p>In VS Code, open <code>30-load-generator.yaml</code> and review how it sends sustained traffic to the application Service.</p>
+        </div>
+
         <div class="command-card">
           <div class="command-label">Start the load generator and wait for it to become Ready</div>
           <pre><code>kubectl apply -f .\manifests\03-horizontal-pod-autoscaler\30-load-generator.yaml
@@ -1701,6 +1783,14 @@ kubectl rollout status deployment/load-generator -n $hpaNs --timeout=120s</code>
           <div class="command-label">Watch the HPA change over time</div>
           <pre><code>kubectl get hpa cpu-demo -n $hpaNs --watch</code></pre>
           <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="callout warning">
+          <strong>The watch command keeps running</strong>
+          <p>
+            Watch the <code>REPLICAS</code> column increase. When it reaches <code>3</code>, press
+            <code>Ctrl+C</code> to stop the watch and return to the PowerShell prompt.
+          </p>
         </div>
 
         <div class="command-card">
@@ -1778,6 +1868,15 @@ kubectl top pods -n $hpaNs -l app=cpu-demo</code></pre>
           <pre><code>kubectl delete deployment load-generator -n $hpaNs
 kubectl get hpa cpu-demo -n $hpaNs --watch</code></pre>
           <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="callout warning">
+          <strong>The watch command keeps running</strong>
+          <p>
+            Scale-down is slower than scale-up. Watch the <code>REPLICAS</code> column and, when
+            the replica count drops, press <code>Ctrl+C</code> to stop the watch and return to the
+            PowerShell prompt.
+          </p>
         </div>
 
         <div class="command-card">
