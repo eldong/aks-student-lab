@@ -758,12 +758,31 @@ html[data-theme="dark"] {
         </div>
 
         <div class="command-card">
+          <div class="command-label">Confirm you are in the cloned aks-student-lab folder</div>
+          <pre><code>Get-Location</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="callout warning">
+          <strong>Check the folder before continuing</strong>
+          <p>
+            The displayed path must end with <code>aks-student-lab</code> and contain
+            <code>index.html</code>, <code>manifests</code>, and <code>images</code>. If it does
+            not, run <code>Set-Location &lt;path-to-aks-student-lab&gt;</code> first.
+          </p>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Open the cloned student-lab folder in Visual Studio Code</div>
+          <pre><code>code .</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="command-card">
           <div class="command-label">Run this once at the start of the lab</div>
-          <pre><code>Get-Location
-if ([string]::IsNullOrWhiteSpace($RESOURCE_GROUP)) { throw 'RESOURCE_GROUP is not set.' }
+          <pre><code>if ([string]::IsNullOrWhiteSpace($RESOURCE_GROUP)) { throw 'RESOURCE_GROUP is not set.' }
 if ([string]::IsNullOrWhiteSpace($AKS_NAME)) { throw 'AKS_NAME is not set.' }
 if ([string]::IsNullOrWhiteSpace($ACR_NAME)) { throw 'ACR_NAME is not set.' }
-code .
 $rg = $RESOURCE_GROUP
 $aksName = $AKS_NAME
 $acrName = $ACR_NAME
