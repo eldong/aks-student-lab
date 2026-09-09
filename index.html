@@ -886,8 +886,11 @@ Test-Path .\images\hpa-demo\Dockerfile</code></pre>
           <pre><code>$acrLoginServer = az acr show --name $acrName --query loginServer -o tsv
 az acr build --registry $acrName --image aks-weather-api:v1 .\images\weather-api
 az acr build --registry $acrName --image aks-hpa-demo:v2 .\images\hpa-demo
-Get-ChildItem .\manifests -Recurse -Filter *.yaml | ForEach-Object { $content = Get-Content $_.FullName -Raw; $content = $content -replace 'image:\s+\S+/aks-weather-api:v1', "image: $acrLoginServer/aks-weather-api:v1"; $content = $content -replace 'image:\s+\S+/aks-hpa-demo:v2', "image: $acrLoginServer/aks-hpa-demo:v2"; Set-Content $_.FullName $content -Encoding utf8 }
-Select-String -Path .\manifests\*\*.yaml -Pattern 'image:'</code></pre>
+if (Test-Path .\.lab\manifests) { Remove-Item .\.lab\manifests -Recurse -Force }
+New-Item -ItemType Directory -Path .\.lab -Force | Out-Null
+Copy-Item .\manifests .\.lab\manifests -Recurse
+Get-ChildItem .\.lab\manifests -Recurse -Filter *.yaml | ForEach-Object { $content = Get-Content $_.FullName -Raw; $content = $content -replace 'image:\s+\S+/aks-weather-api:v1', "image: $acrLoginServer/aks-weather-api:v1"; $content = $content -replace 'image:\s+\S+/aks-hpa-demo:v2', "image: $acrLoginServer/aks-hpa-demo:v2"; Set-Content $_.FullName $content -Encoding utf8 }
+Select-String -Path .\.lab\manifests\*\*.yaml -Pattern 'image:'</code></pre>
           <button class="copy" type="button">Copy</button>
         </div>
 
@@ -900,7 +903,9 @@ Select-String -Path .\manifests\*\*.yaml -Pattern 'image:'</code></pre>
             <li><code>Test-Path</code> proves the cloned repository contains all required manifests and image source.</li>
             <li><code>az acr show</code> resolves the login server for the pre-created registry named by <code>$ACR_NAME</code>.</li>
             <li><code>az acr build</code> builds the included application source in Azure; Docker Desktop is not required.</li>
-            <li>The final PowerShell command changes the copied manifests to use your registry login server.</li>
+            <li>The copy commands create disposable working manifests under <code>.\.lab\manifests</code>.</li>
+            <li>The replacement command changes only those working copies to use your registry login server.</li>
+            <li>When a later step asks you to review a manifest in VS Code, open the named file under <code>.\.lab\manifests</code>.</li>
           </ul>
         </div>
 
@@ -910,7 +915,9 @@ Select-String -Path .\manifests\*\*.yaml -Pattern 'image:'</code></pre>
             You should see an Azure username, a Kubernetes context, cluster information, Ready nodes,
             and <code>True</code> for all five <code>Test-Path</code> checks. Both ACR builds should
             complete successfully, and the final image lines should use your value from
-            <code>$acrLoginServer</code>.
+            <code>$acrLoginServer</code>. The customized working manifests are created under
+            <code>.\.lab\manifests</code>; the checked-in templates under <code>.\manifests</code>
+            remain unchanged.
           </p>
         </div>
 
@@ -921,7 +928,7 @@ Select-String -Path .\manifests\*\*.yaml -Pattern 'image:'</code></pre>
             <li>If a <code>Test-Path</code> command returns <code>False</code>, go back to Step 1 and confirm your working folder.</li>
             <li>If Azure commands fail, you can still complete Module 1 and much of Module 3 if VPA is already enabled, but Module 2 add-on enablement may require instructor help.</li>
             <li>If <code>az acr show</code> or <code>az acr build</code> returns an authorization error, ask the instructor to verify your access to the pre-created ACR.</li>
-            <li>If a later pod shows <code>ImagePullBackOff</code>, confirm the manifest uses <code>$acrLoginServer</code> and ask the instructor to verify that the cluster has pull permission on the ACR.</li>
+            <li>If a later pod shows <code>ImagePullBackOff</code>, confirm the working manifest under <code>.\.lab\manifests</code> uses <code>$acrLoginServer</code> and ask the instructor to verify that the cluster has pull permission on the ACR.</li>
           </ul>
         </div>
 
@@ -967,7 +974,7 @@ Select-String -Path .\manifests\*\*.yaml -Pattern 'image:'</code></pre>
 
         <div class="command-card">
           <div class="command-label">Create the namespace and inspect the label</div>
-          <pre><code>kubectl apply -f .\manifests\01-limit-ranges-resource-quotas\00-namespace.yaml
+          <pre><code>kubectl apply -f .\.lab\manifests\01-limit-ranges-resource-quotas\00-namespace.yaml
 kubectl get namespace $limitNs --show-labels</code></pre>
           <button class="copy" type="button">Copy</button>
         </div>
@@ -979,7 +986,7 @@ kubectl get namespace $limitNs --show-labels</code></pre>
 
         <div class="command-card">
           <div class="command-label">Apply the LimitRange and inspect its policy</div>
-          <pre><code>kubectl apply -f .\manifests\01-limit-ranges-resource-quotas\10-limit-range.yaml
+          <pre><code>kubectl apply -f .\.lab\manifests\01-limit-ranges-resource-quotas\10-limit-range.yaml
 kubectl describe limitrange container-resource-limits -n $limitNs</code></pre>
           <button class="copy" type="button">Copy</button>
         </div>
@@ -1072,7 +1079,7 @@ kubectl describe limitrange container-resource-limits -n $limitNs</code></pre>
 
         <div class="command-card">
           <div class="command-label">Create a pod with no explicit resources and inspect the injected values</div>
-          <pre><code>kubectl apply -f .\manifests\01-limit-ranges-resource-quotas\20-defaulted-pod.yaml
+          <pre><code>kubectl apply -f .\.lab\manifests\01-limit-ranges-resource-quotas\20-defaulted-pod.yaml
 kubectl wait --for=condition=Ready pod/defaulted-pod -n $limitNs --timeout=90s
 kubectl get pod defaulted-pod -n $limitNs -o jsonpath="{.spec.containers[0].resources}"</code></pre>
           <button class="copy" type="button">Copy</button>
@@ -1085,7 +1092,7 @@ kubectl get pod defaulted-pod -n $limitNs -o jsonpath="{.spec.containers[0].reso
 
         <div class="command-card">
           <div class="command-label">Try to create a pod above the LimitRange maximum</div>
-          <pre><code>kubectl apply -f .\manifests\01-limit-ranges-resource-quotas\30-over-limit-pod.yaml</code></pre>
+          <pre><code>kubectl apply -f .\.lab\manifests\01-limit-ranges-resource-quotas\30-over-limit-pod.yaml</code></pre>
           <button class="copy" type="button">Copy</button>
         </div>
 
@@ -1168,7 +1175,7 @@ kubectl get pod defaulted-pod -n $limitNs -o jsonpath="{.spec.containers[0].reso
 
         <div class="command-card">
           <div class="command-label">Apply the ResourceQuota and inspect the budget</div>
-          <pre><code>kubectl apply -f .\manifests\01-limit-ranges-resource-quotas\40-resource-quota.yaml
+          <pre><code>kubectl apply -f .\.lab\manifests\01-limit-ranges-resource-quotas\40-resource-quota.yaml
 kubectl describe resourcequota namespace-compute-quota -n $limitNs</code></pre>
           <button class="copy" type="button">Copy</button>
         </div>
@@ -1180,7 +1187,7 @@ kubectl describe resourcequota namespace-compute-quota -n $limitNs</code></pre>
 
         <div class="command-card">
           <div class="command-label">Create a four-replica Deployment and inspect the result</div>
-          <pre><code>kubectl apply -f .\manifests\01-limit-ranges-resource-quotas\50-quota-workload.yaml
+          <pre><code>kubectl apply -f .\.lab\manifests\01-limit-ranges-resource-quotas\50-quota-workload.yaml
 kubectl get deployment,pods -n $limitNs -o wide
 kubectl describe resourcequota namespace-compute-quota -n $limitNs
 kubectl get events -n $limitNs --field-selector reason=FailedCreate --sort-by=.lastTimestamp</code></pre>
@@ -1377,8 +1384,8 @@ $vpaEnabled = az aks show --resource-group $rg --name $aksName --query "workload
 
         <div class="command-card">
           <div class="command-label">Deploy the VPA demo workload and inspect the configured requests</div>
-          <pre><code>kubectl apply -f .\manifests\02-vertical-pod-autoscaler\00-namespace.yaml
-kubectl apply -f .\manifests\02-vertical-pod-autoscaler\10-workload.yaml
+          <pre><code>kubectl apply -f .\.lab\manifests\02-vertical-pod-autoscaler\00-namespace.yaml
+kubectl apply -f .\.lab\manifests\02-vertical-pod-autoscaler\10-workload.yaml
 kubectl rollout status deployment/weather-api -n $vpaNs --timeout=120s
 kubectl get pods -n $vpaNs -l app=weather-api -o custom-columns="POD:.metadata.name,CPU_REQUEST:.spec.containers[0].resources.requests.cpu,MEMORY_REQUEST:.spec.containers[0].resources.requests.memory"</code></pre>
           <button class="copy" type="button">Copy</button>
@@ -1462,7 +1469,7 @@ kubectl get pods -n $vpaNs -l app=weather-api -o custom-columns="POD:.metadata.n
 
         <div class="command-card">
           <div class="command-label">Apply the VPA in Off mode</div>
-          <pre><code>kubectl apply -f .\manifests\02-vertical-pod-autoscaler\20-vpa-off.yaml
+          <pre><code>kubectl apply -f .\.lab\manifests\02-vertical-pod-autoscaler\20-vpa-off.yaml
 kubectl get vpa -n $vpaNs</code></pre>
           <button class="copy" type="button">Copy</button>
         </div>
@@ -1556,7 +1563,7 @@ kubectl get vpa weather-api-vpa -n $vpaNs -o jsonpath="{.status.recommendation}"
         <div class="command-card">
           <div class="command-label">Record the current pods, enable Recreate mode, and watch for new pod names</div>
           <pre><code>kubectl get pods -n $vpaNs -l app=weather-api
-kubectl apply -f .\manifests\02-vertical-pod-autoscaler\30-vpa-recreate.yaml
+kubectl apply -f .\.lab\manifests\02-vertical-pod-autoscaler\30-vpa-recreate.yaml
 kubectl get pods -n $vpaNs -l app=weather-api --watch</code></pre>
           <button class="copy" type="button">Copy</button>
         </div>
@@ -1682,8 +1689,8 @@ kubectl top nodes</code></pre>
 
         <div class="command-card">
           <div class="command-label">Deploy the HPA demo workload and inspect the baseline</div>
-          <pre><code>kubectl apply -f .\manifests\03-horizontal-pod-autoscaler\00-namespace.yaml
-kubectl apply -f .\manifests\03-horizontal-pod-autoscaler\10-workload.yaml
+          <pre><code>kubectl apply -f .\.lab\manifests\03-horizontal-pod-autoscaler\00-namespace.yaml
+kubectl apply -f .\.lab\manifests\03-horizontal-pod-autoscaler\10-workload.yaml
 kubectl rollout status deployment/cpu-demo -n $hpaNs --timeout=120s
 kubectl get deployment,pods -n $hpaNs -o wide
 kubectl top pods -n $hpaNs</code></pre>
@@ -1706,7 +1713,7 @@ kubectl top pods -n $hpaNs</code></pre>
 
         <div class="command-card">
           <div class="command-label">Create the HPA and inspect its initial status</div>
-          <pre><code>kubectl apply -f .\manifests\03-horizontal-pod-autoscaler\20-hpa.yaml
+          <pre><code>kubectl apply -f .\.lab\manifests\03-horizontal-pod-autoscaler\20-hpa.yaml
 kubectl describe hpa cpu-demo -n $hpaNs</code></pre>
           <button class="copy" type="button">Copy</button>
         </div>
@@ -1793,7 +1800,7 @@ kubectl describe hpa cpu-demo -n $hpaNs</code></pre>
 
         <div class="command-card">
           <div class="command-label">Start the load generator and wait for it to become Ready</div>
-          <pre><code>kubectl apply -f .\manifests\03-horizontal-pod-autoscaler\30-load-generator.yaml
+          <pre><code>kubectl apply -f .\.lab\manifests\03-horizontal-pod-autoscaler\30-load-generator.yaml
 kubectl rollout status deployment/load-generator -n $hpaNs --timeout=120s</code></pre>
           <button class="copy" type="button">Copy</button>
         </div>

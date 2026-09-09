@@ -36,8 +36,10 @@ $ACR_NAME = '<acr-name>'
 ```
 
 The repository includes source for both required images. The workbook builds
-them in the pre-created ACR and updates the local manifests to use that
-registry.
+them in the pre-created ACR. It copies the checked-in manifest templates to
+the ignored `.\.lab\manifests` working folder and updates those copies to use
+that registry. The tracked templates remain unchanged, so completing the lab
+does not block a later `git pull`.
 
 ## Clone and start
 
@@ -74,6 +76,7 @@ az aks get-credentials --name $AKS_NAME --resource-group $RESOURCE_GROUP
 student-lab
 |-- index.html
 |-- README.md
+|-- .gitignore
 |-- manifests
     |-- 01-limit-ranges-resource-quotas
     |-- 02-vertical-pod-autoscaler
@@ -82,6 +85,9 @@ student-lab
     |-- weather-api
     `-- hpa-demo
 ```
+
+The workbook creates `.\.lab\manifests` during preflight. This generated
+folder is ignored by Git and should not be committed.
 
 ## Permissions
 
