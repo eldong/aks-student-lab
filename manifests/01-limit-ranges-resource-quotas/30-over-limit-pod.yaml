@@ -1,3 +1,4 @@
+# Intentionally exceeds the LimitRange maximum so admission rejects this pod.
 apiVersion: v1
 kind: Pod
 metadata:
@@ -23,9 +24,9 @@ spec:
         runAsUser: 1000
       resources:
         requests:
+          # Both values are above the configured 500m CPU and 256Mi maximums.
           cpu: 600m
           memory: 300Mi
         limits:
           cpu: "1"
           memory: 512Mi
-

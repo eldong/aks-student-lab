@@ -1,3 +1,4 @@
+# Off mode calculates recommendations without changing or replacing pods.
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
@@ -13,6 +14,7 @@ spec:
   resourcePolicy:
     containerPolicies:
       - containerName: weather-api
+        # VPA may recommend requests only, bounded by this allowed range.
         controlledValues: RequestsOnly
         controlledResources:
           - cpu
@@ -23,4 +25,3 @@ spec:
         maxAllowed:
           cpu: 100m
           memory: 128Mi
-

@@ -1,3 +1,4 @@
+# Sets default, minimum, and maximum resources for containers in this namespace.
 apiVersion: v1
 kind: LimitRange
 metadata:
@@ -6,9 +7,11 @@ metadata:
 spec:
   limits:
     - type: Container
+      # Applied when a container omits its limits.
       default:
         cpu: 300m
         memory: 128Mi
+      # Applied when a container omits its requests.
       defaultRequest:
         cpu: 100m
         memory: 64Mi
@@ -18,4 +21,3 @@ spec:
       max:
         cpu: 500m
         memory: 256Mi
-

@@ -1,7 +1,7 @@
+# Isolates the LimitRange and ResourceQuota exercises from other workloads.
 apiVersion: v1
 kind: Namespace
 metadata:
   name: aks-governance-demo
   labels:
     demo: limit-ranges-resource-quotas
-

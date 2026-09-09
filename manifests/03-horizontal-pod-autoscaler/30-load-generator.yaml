@@ -1,3 +1,4 @@
+# Generates sustained in-cluster traffic so the HPA has CPU load to react to.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -27,6 +28,7 @@ spec:
             - load.js
           env:
             - name: TARGET_URL
+              # Calls the cpu-demo Service and asks each request to consume CPU.
               value: http://cpu-demo:3000/work?duration=100
             - name: CONCURRENCY
               value: "1"
@@ -45,4 +47,3 @@ spec:
             limits:
               cpu: 100m
               memory: 64Mi
-

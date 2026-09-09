@@ -1,9 +1,11 @@
+# Requests four replicas to demonstrate partial creation when quota is exhausted.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: quota-workload
   namespace: aks-governance-demo
 spec:
+  # The namespace quota permits only three total pods, including defaulted-pod.
   replicas: 4
   selector:
     matchLabels:
@@ -33,4 +35,3 @@ spec:
           ports:
             - name: http
               containerPort: 3000
-

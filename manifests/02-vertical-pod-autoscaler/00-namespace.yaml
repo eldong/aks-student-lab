@@ -1,7 +1,7 @@
+# Isolates the Vertical Pod Autoscaler exercise from other workloads.
 apiVersion: v1
 kind: Namespace
 metadata:
   name: aks-vpa-demo
   labels:
     demo: vertical-pod-autoscaler
-

@@ -1,7 +1,7 @@
+# Isolates the Horizontal Pod Autoscaler exercise from other workloads.
 apiVersion: v1
 kind: Namespace
 metadata:
   name: aks-hpa-demo
   labels:
     demo: horizontal-pod-autoscaler
-

@@ -1,3 +1,4 @@
+# Intentionally omits resources so the LimitRange injects defaults.
 apiVersion: v1
 kind: Pod
 metadata:
@@ -26,4 +27,4 @@ spec:
       ports:
         - name: http
           containerPort: 3000
-
+      # No resources block: inspect the live pod to see the injected values.

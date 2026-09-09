@@ -1,3 +1,4 @@
+# Scales cpu-demo replicas based on average CPU utilization.
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -29,5 +30,5 @@ spec:
         name: cpu
         target:
           type: Utilization
+          # 50% of the workload's 50m CPU request is approximately 25m per pod.
           averageUtilization: 50
-

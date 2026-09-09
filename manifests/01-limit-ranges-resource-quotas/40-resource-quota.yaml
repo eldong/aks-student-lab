@@ -1,3 +1,4 @@
+# Caps the total pods and compute resources consumed by this namespace.
 apiVersion: v1
 kind: ResourceQuota
 metadata:
@@ -5,9 +6,9 @@ metadata:
   namespace: aks-governance-demo
 spec:
   hard:
+    # Only three pods can exist in the namespace at one time.
     pods: "3"
     requests.cpu: 300m
     requests.memory: 192Mi
     limits.cpu: 900m
     limits.memory: 384Mi
-
