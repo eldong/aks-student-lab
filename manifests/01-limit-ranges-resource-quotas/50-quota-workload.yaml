@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quota-workload
+  namespace: aks-governance-demo
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: quota-workload
+  template:
+    metadata:
+      labels:
+        app: quota-workload
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: weather-api
+          image: YOUR_ACR.azurecr.io/aks-weather-api:v1
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+          ports:
+            - name: http
+              containerPort: 3000
+

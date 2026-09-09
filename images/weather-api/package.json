@@ -1,0 +1,14 @@
+{
+  "name": "aks-weather-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Keyless weather API for an AKS microservices demo",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

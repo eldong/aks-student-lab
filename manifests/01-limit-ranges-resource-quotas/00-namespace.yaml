@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: aks-governance-demo
+  labels:
+    demo: limit-ranges-resource-quotas
+

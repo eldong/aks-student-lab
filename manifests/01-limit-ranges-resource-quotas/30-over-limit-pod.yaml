@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: over-limit-pod
+  namespace: aks-governance-demo
+spec:
+  nodeSelector:
+    kubernetes.io/os: linux
+  automountServiceAccountToken: false
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: weather-api
+      image: YOUR_ACR.azurecr.io/aks-weather-api:v1
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        runAsUser: 1000
+      resources:
+        requests:
+          cpu: 600m
+          memory: 300Mi
+        limits:
+          cpu: "1"
+          memory: 512Mi
+

@@ -1,0 +1,1994 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Student workbook for AKS limit ranges, VPA, and HPA demos">
+  <title>AKS Advanced Topics Student Lab</title>
+  <script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("scoutTheme");
+    const theme =
+      param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+  <style>
+    :root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef;
+  --cp-bg-elevated: #fcfbf8;
+  --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5;
+  --cp-border: #dedede;
+  --cp-border-strong: #919191;
+  --cp-text: #242424;
+  --cp-text-muted: #5c5c5c;
+  --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b;
+  --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08);
+  --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a;
+  --cp-danger: #dc2626;
+  --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-overlay: rgba(255, 255, 255, 0.8);
+  --cp-panel: rgba(255, 255, 255, 0.86);
+  --cp-panel-strong: rgba(255, 255, 255, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.55);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a;
+  --cp-bg-elevated: #343231;
+  --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e;
+  --cp-border: #474747;
+  --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede;
+  --cp-text-muted: #919191;
+  --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1;
+  --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14);
+  --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80;
+  --cp-danger: #f87171;
+  --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-overlay: rgba(41, 41, 41, 0.88);
+  --cp-panel: rgba(41, 41, 41, 0.72);
+  --cp-panel-strong: rgba(41, 41, 41, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.04);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--cp-bg);
+      color: var(--cp-text);
+      font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    code,
+    pre {
+      font-family: Consolas, "Courier New", Courier, monospace;
+    }
+
+    a {
+      color: var(--cp-link);
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      border-bottom: 1px solid var(--cp-border);
+      background: var(--cp-panel-strong);
+    }
+
+    .topbar-inner {
+      width: min(1320px, calc(100% - 32px));
+      min-height: 72px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 760;
+    }
+
+    .brand-mark {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: 0.625rem;
+      background: var(--cp-accent);
+      color: var(--cp-accent-fg);
+      font-weight: 800;
+    }
+
+    .progress {
+      min-width: 260px;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 6px;
+      color: var(--cp-text-muted);
+      font-size: 0.84rem;
+    }
+
+    .track {
+      height: 8px;
+      overflow: hidden;
+      border-radius: 0.625rem;
+      background: var(--cp-surface-soft);
+    }
+
+    .bar {
+      width: 0;
+      height: 100%;
+      background: var(--cp-accent);
+      transition: width 180ms ease;
+    }
+
+    .layout {
+      width: min(1320px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 44px 0 84px;
+      display: grid;
+      grid-template-columns: 292px minmax(0, 1fr);
+      gap: 36px;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 96px;
+      align-self: start;
+    }
+
+    .sidebar-title,
+    .eyebrow,
+    .command-label,
+    .module-label {
+      color: var(--cp-text-soft);
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+
+    .sidebar-panel,
+    .step,
+    .summary-card {
+      border: 1px solid var(--cp-border);
+      border-radius: 16px;
+      background: var(--cp-surface);
+      box-shadow: 0 0 2px var(--cp-border), 0 1px 2px var(--cp-border);
+    }
+
+    .sidebar-panel {
+      padding: 18px;
+    }
+
+    .module-label {
+      margin: 12px 0 6px;
+      color: var(--cp-accent);
+    }
+
+    .nav {
+      display: grid;
+      gap: 6px;
+    }
+
+    .nav-button {
+      width: 100%;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 0;
+      border-radius: 0.625rem;
+      background: transparent;
+      color: var(--cp-text-muted);
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .nav-button:hover {
+      background: var(--cp-surface-soft);
+      color: var(--cp-text);
+    }
+
+    .nav-button.active {
+      background: var(--cp-accent-soft);
+      color: var(--cp-accent);
+      font-weight: 700;
+    }
+
+    .nav-button.complete .nav-number {
+      border-color: var(--cp-success);
+      color: var(--cp-success);
+    }
+
+    .nav-number {
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border: 1px solid var(--cp-border);
+      border-radius: 0.625rem;
+      font-size: 0.75rem;
+      font-weight: 800;
+    }
+
+    .sidebar-note {
+      margin-top: 18px;
+      padding: 16px;
+      border: 1px solid var(--cp-border);
+      border-radius: 0.625rem;
+      background: var(--cp-surface-soft);
+      color: var(--cp-text-muted);
+      line-height: 1.56;
+      font-size: 0.92rem;
+    }
+
+    .sidebar-note code {
+      color: var(--cp-text);
+    }
+
+    .hero {
+      margin-bottom: 34px;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      margin-top: 0;
+      letter-spacing: -0.03em;
+    }
+
+    h1 {
+      max-width: 920px;
+      margin-bottom: 14px;
+      font-size: clamp(2.5rem, 6vw, 4.6rem);
+      line-height: 1.02;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+      font-size: clamp(1.75rem, 4vw, 2.55rem);
+    }
+
+    h3 {
+      margin-bottom: 10px;
+      font-size: 1.05rem;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--cp-accent);
+    }
+
+    .lead {
+      max-width: 860px;
+      margin: 0;
+      color: var(--cp-text-muted);
+      font-size: 1.06rem;
+      line-height: 1.68;
+    }
+
+    .pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .pill {
+      padding: 8px 11px;
+      border: 1px solid var(--cp-border);
+      border-radius: 0.625rem;
+      background: var(--cp-surface);
+      color: var(--cp-text-muted);
+      font-size: 0.86rem;
+    }
+
+    .summary-card {
+      padding: 18px;
+      margin-top: 20px;
+    }
+
+    .summary-card p,
+    .summary-card ul {
+      margin: 0;
+      color: var(--cp-text-muted);
+      line-height: 1.6;
+    }
+
+    .summary-card ul {
+      padding-left: 20px;
+      margin-top: 8px;
+    }
+
+    .step {
+      display: none;
+      padding: 30px;
+    }
+
+    .step.active {
+      display: block;
+    }
+
+    .step-heading {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .step-number {
+      width: 52px;
+      height: 52px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 0.625rem;
+      background: var(--cp-accent-soft);
+      color: var(--cp-accent);
+      font-weight: 850;
+      font-size: 1.05rem;
+    }
+
+    .module-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      margin-bottom: 12px;
+      border: 1px solid var(--cp-border);
+      border-radius: 999px;
+      background: var(--cp-surface-soft);
+      color: var(--cp-text-muted);
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .section-grid,
+    .terms,
+    .compare-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .section-card,
+    .term,
+    .compare-card {
+      padding: 18px;
+      border: 1px solid var(--cp-border);
+      border-radius: 0.625rem;
+      background: var(--cp-surface-soft);
+      color: var(--cp-text-muted);
+      line-height: 1.6;
+    }
+
+    .section-card p,
+    .section-card ul,
+    .term p,
+    .compare-card p,
+    .compare-card ul {
+      margin: 0;
+    }
+
+    .section-card ul,
+    .compare-card ul {
+      padding-left: 20px;
+    }
+
+    .section-card li + li,
+    .compare-card li + li {
+      margin-top: 6px;
+    }
+
+    .section-card strong,
+    .callout strong,
+    .term strong,
+    .compare-card strong {
+      color: var(--cp-text);
+    }
+
+    .command-card {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .command-label {
+      margin: 0 0 8px;
+    }
+
+    pre {
+      margin: 0;
+      padding: 18px 66px 18px 18px;
+      overflow-x: auto;
+      border: 1px solid var(--cp-border);
+      border-radius: 0.625rem;
+      background: var(--cp-bg-elevated);
+      color: var(--cp-text);
+      font-size: 0.92rem;
+      line-height: 1.58;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .copy {
+      position: absolute;
+      top: 31px;
+      right: 10px;
+      min-height: 34px;
+      padding: 0 10px;
+      border: 1px solid var(--cp-border);
+      border-radius: 0.625rem;
+      background: var(--cp-surface);
+      color: var(--cp-text-muted);
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .callout {
+      margin-bottom: 16px;
+      padding: 16px;
+      border: 1px solid var(--cp-border);
+      border-radius: 0.625rem;
+      background: var(--cp-surface-soft);
+      color: var(--cp-text-muted);
+      line-height: 1.6;
+    }
+
+    .callout p,
+    .callout ul {
+      margin: 6px 0 0;
+    }
+
+    .callout ul {
+      padding-left: 20px;
+    }
+
+    .callout li + li {
+      margin-top: 6px;
+    }
+
+    .callout.expected {
+      border-left: 4px solid var(--cp-success);
+    }
+
+    .callout.warning {
+      border-left: 4px solid var(--cp-warning);
+    }
+
+    .callout.info {
+      border-left: 4px solid var(--cp-link);
+    }
+
+    .callout.danger {
+      border-left: 4px solid var(--cp-danger);
+    }
+
+    details {
+      margin-top: 12px;
+      padding: 14px 16px;
+      border: 1px solid var(--cp-border);
+      border-radius: 0.625rem;
+      background: var(--cp-surface-soft);
+      color: var(--cp-text-muted);
+    }
+
+    details summary {
+      cursor: pointer;
+      color: var(--cp-text);
+      font-weight: 700;
+    }
+
+    details p,
+    details ul {
+      margin: 10px 0 0;
+      line-height: 1.6;
+    }
+
+    details ul {
+      padding-left: 20px;
+    }
+
+    .matrix-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--cp-border);
+      border-radius: 0.625rem;
+      background: var(--cp-surface-soft);
+    }
+
+    .matrix {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+
+    .matrix th,
+    .matrix td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--cp-border);
+      text-align: left;
+      vertical-align: top;
+      line-height: 1.55;
+      color: var(--cp-text-muted);
+    }
+
+    .matrix th,
+    .matrix td:first-child {
+      color: var(--cp-text);
+    }
+
+    .matrix tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .actions {
+      margin-top: 28px;
+      padding-top: 22px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-top: 1px solid var(--cp-border);
+    }
+
+    .button {
+      min-height: 42px;
+      padding: 0 16px;
+      border: 1px solid var(--cp-accent);
+      border-radius: 0.625rem;
+      background: var(--cp-accent);
+      color: var(--cp-accent-fg);
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .button:hover {
+      background: var(--cp-accent-hover);
+      border-color: var(--cp-accent-hover);
+    }
+
+    .button.secondary {
+      border-color: var(--cp-border);
+      background: var(--cp-surface);
+      color: var(--cp-text);
+    }
+
+    .button.secondary:hover {
+      background: var(--cp-surface-soft);
+      border-color: var(--cp-border-strong);
+    }
+
+    .button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+        padding-top: 28px;
+      }
+
+      .sidebar {
+        position: static;
+      }
+    }
+
+    @media (max-width: 840px) {
+      .topbar-inner {
+        width: min(100% - 20px, 1320px);
+      }
+
+      .progress {
+        display: none;
+      }
+
+      .section-grid,
+      .terms,
+      .compare-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .layout {
+        width: min(100% - 20px, 1320px);
+      }
+
+      .step {
+        padding: 22px;
+      }
+
+      .step-heading {
+        flex-direction: column;
+      }
+
+      .copy {
+        position: static;
+        margin-top: 8px;
+      }
+
+      pre {
+        padding-right: 18px;
+      }
+
+      .actions {
+        flex-direction: column-reverse;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-mark">AKS</span>
+        <span>Advanced Topics Student Lab</span>
+      </div>
+      <div class="progress">
+        <div class="progress-label">
+          <span>Student progress</span>
+          <span id="progress-text"></span>
+        </div>
+        <div class="track">
+          <div id="bar" class="bar"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-panel">
+        <p class="sidebar-title">Modules and steps</p>
+        <nav id="nav" class="nav"></nav>
+      </div>
+      <div class="sidebar-panel">
+        <p class="sidebar-title">Working folder</p>
+        <div class="sidebar-note">
+          The folder where you cloned this repository and where
+          <code>index.html</code> is located.
+        </div>
+        <div class="sidebar-note">
+          <strong>Included manifests</strong><br>
+          Everything required by the workbook is included under
+          <code>.\manifests</code>.
+        </div>
+        <div class="sidebar-note">
+          <strong>Important timing</strong><br>
+          New pods may need about a minute before <code>kubectl top</code> shows metrics.
+          VPA recommendations usually take longer.
+        </div>
+      </div>
+    </aside>
+
+    <main>
+      <section class="hero">
+        <p class="eyebrow">Beginner-friendly combined lab · Windows PowerShell · Existing AKS cluster required</p>
+        <h1>Learn namespace governance, VPA, and HPA with one guided student workbook</h1>
+        <p class="lead">
+          This lab combines three existing advanced-topic demos into one student-focused experience.
+          You will see how Kubernetes enforces per-container defaults and namespace budgets, how
+          Vertical Pod Autoscaler recommends better requests, and how Horizontal Pod Autoscaler
+          scales replicas up and down under CPU load.
+        </p>
+        <div class="pills">
+          <span class="pill">Module 1 · LimitRange and ResourceQuota</span>
+          <span class="pill">Module 2 · Vertical Pod Autoscaler</span>
+          <span class="pill">Module 3 · Horizontal Pod Autoscaler</span>
+          <span class="pill">Copy-ready commands</span>
+          <span class="pill">One PowerShell window</span>
+        </div>
+        <div class="summary-card">
+          <p><strong>What to expect</strong></p>
+          <ul>
+            <li>Run all commands from the <code>student-lab</code> folder.</li>
+            <li>Use the manifests included in this cloned repository under <code>.\manifests</code>.</li>
+            <li>Use <code>kubectl</code> for all three modules and <code>az</code> only for the VPA add-on check or enable step.</li>
+            <li>See realistic delays: metrics are not instant, and VPA recommendations take time.</li>
+            <li>Clean up only the demo namespaces when you finish.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="step" data-module="Preflight" data-title="Set your working session">
+        <div class="step-heading">
+          <span class="step-number">1</span>
+          <div>
+            <div class="module-chip">Preflight</div>
+            <h2>Open the correct folder and define the lab variables</h2>
+            <p class="lead">Start in the right working directory so all of the relative manifest paths work.</p>
+          </div>
+        </div>
+
+        <div class="section-grid">
+          <div class="section-card">
+            <h3>Objective</h3>
+            <p>Prepare one PowerShell session you can reuse across all three modules.</p>
+          </div>
+          <div class="section-card">
+            <h3>Why this matters</h3>
+            <p>
+              The commands in this workbook rely on relative paths inside this cloned repository.
+              If you run from the wrong folder, the manifests will not be found. The variables below
+              also persist only in the current PowerShell window.
+            </p>
+          </div>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Run this once at the start of the lab</div>
+          <pre><code>Get-Location
+if ([string]::IsNullOrWhiteSpace($RESOURCE_GROUP)) { throw 'RESOURCE_GROUP is not set.' }
+if ([string]::IsNullOrWhiteSpace($AKS_NAME)) { throw 'AKS_NAME is not set.' }
+if ([string]::IsNullOrWhiteSpace($ACR_NAME)) { throw 'ACR_NAME is not set.' }
+$rg = $RESOURCE_GROUP
+$aksName = $AKS_NAME
+$acrName = $ACR_NAME
+$location = az aks show --resource-group $rg --name $aksName --query location -o tsv
+$limitNs = 'aks-governance-demo'
+$vpaNs = 'aks-vpa-demo'
+$hpaNs = 'aks-hpa-demo'
+"AKS: $aksName | Resource group: $rg | ACR: $acrName | Region: $location"</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="section-card">
+          <h3>Command explanation</h3>
+          <ul>
+            <li>Open PowerShell in the cloned repository folder before running these commands.</li>
+            <li><code>Get-Location</code> confirms the folder from which relative manifest paths will be resolved.</li>
+            <li>The first three checks stop immediately with a clear message if an instructor-provided variable is missing.</li>
+            <li><code>$rg</code>, <code>$aksName</code>, and <code>$acrName</code> are short aliases for the supplied variables.</li>
+            <li><code>$location</code> reads the cluster's Azure region instead of assuming one.</li>
+            <li><code>$limitNs</code>, <code>$vpaNs</code>, and <code>$hpaNs</code> keep the namespace names easy to reuse.</li>
+            <li><code>Get-Location</code> gives you quick proof that the folder is correct.</li>
+          </ul>
+        </div>
+
+        <div class="callout expected">
+          <strong>Expected output / evidence</strong>
+          <p><code>Get-Location</code> shows the cloned repository folder, and the final line prints the supplied AKS cluster, resource group, ACR, and detected Azure region.</p>
+        </div>
+
+        <div class="callout warning">
+          <strong>Troubleshooting note</strong>
+          <p>
+            If the folder is wrong, run <code>Set-Location &lt;path-to-your-cloned-repository&gt;</code>.
+            If a variable is missing, stop and ask the instructor for the setup command. Opening a new
+            PowerShell window can clear ordinary PowerShell variables, so rerun the instructor setup first.
+          </p>
+        </div>
+
+        <div class="callout info">
+          <strong>Checkpoint / question</strong>
+          <p>Why is it important to keep using the same PowerShell window during the lab?</p>
+        </div>
+
+        <div class="actions">
+          <button class="button secondary previous" type="button" disabled>← Previous</button>
+          <button class="button next" type="button">Next →</button>
+        </div>
+      </section>
+
+      <section class="step" data-module="Preflight" data-title="Check cluster access and shared assets">
+        <div class="step-heading">
+          <span class="step-number">2</span>
+          <div>
+            <div class="module-chip">Preflight</div>
+            <h2>Confirm Azure access, Kubernetes access, metrics, and the included manifest paths</h2>
+            <p class="lead">Catch authentication or path issues before you start creating resources.</p>
+          </div>
+        </div>
+
+        <div class="section-grid">
+          <div class="section-card">
+            <h3>Objective</h3>
+            <p>Verify that you are signed in, pointed at the correct cluster, and able to reach the manifests included in this repository.</p>
+          </div>
+          <div class="section-card">
+            <h3>Why this matters</h3>
+            <p>
+              HPA and VPA both depend on cluster metrics. VPA also needs Azure access if the add-on
+              is not already enabled. It is much easier to catch those prerequisites up front.
+            </p>
+          </div>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Confirm Azure and Kubernetes access</div>
+          <pre><code>az account show --query user.name -o tsv
+kubectl config current-context
+kubectl cluster-info
+kubectl get nodes
+kubectl top nodes</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Confirm the workbook can see its included manifests and image references</div>
+          <pre><code>Test-Path .\manifests\01-limit-ranges-resource-quotas\10-limit-range.yaml
+Test-Path .\manifests\02-vertical-pod-autoscaler\20-vpa-off.yaml
+Test-Path .\manifests\03-horizontal-pod-autoscaler\20-hpa.yaml
+Get-Content .\manifests\02-vertical-pod-autoscaler\10-workload.yaml | Select-String 'image:'
+Get-Content .\manifests\03-horizontal-pod-autoscaler\10-workload.yaml | Select-String 'image:'
+Test-Path .\images\weather-api\Dockerfile
+Test-Path .\images\hpa-demo\Dockerfile</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Build the two included images in the preconfigured ACR</div>
+          <pre><code>$acrLoginServer = az acr show --name $acrName --query loginServer -o tsv
+az acr build --registry $acrName --image aks-weather-api:v1 .\images\weather-api
+az acr build --registry $acrName --image aks-hpa-demo:v2 .\images\hpa-demo
+Get-ChildItem .\manifests -Recurse -Filter *.yaml | ForEach-Object { $content = Get-Content $_.FullName -Raw; $content = $content -replace 'image:\s+\S+/aks-weather-api:v1', "image: $acrLoginServer/aks-weather-api:v1"; $content = $content -replace 'image:\s+\S+/aks-hpa-demo:v2', "image: $acrLoginServer/aks-hpa-demo:v2"; Set-Content $_.FullName $content -Encoding utf8 }
+Select-String -Path .\manifests\*\*.yaml -Pattern 'image:'</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="section-card">
+          <h3>Command explanation</h3>
+          <ul>
+            <li><code>az account show --query user.name -o tsv</code> confirms the signed-in Azure identity without dumping extra subscription details.</li>
+            <li><code>kubectl config current-context</code>, <code>kubectl cluster-info</code>, and <code>kubectl get nodes</code> prove the cluster is reachable.</li>
+            <li><code>kubectl top nodes</code> checks whether the Metrics API is returning data.</li>
+            <li><code>Test-Path</code> proves the cloned repository contains all required manifests and image source.</li>
+            <li><code>az acr show</code> resolves the login server for the pre-created registry named by <code>$ACR_NAME</code>.</li>
+            <li><code>az acr build</code> builds the included application source in Azure; Docker Desktop is not required.</li>
+            <li>The final PowerShell command changes the copied manifests to use your registry login server.</li>
+          </ul>
+        </div>
+
+        <div class="callout expected">
+          <strong>Expected output / evidence</strong>
+          <p>
+            You should see an Azure username, a Kubernetes context, cluster information, Ready nodes,
+            and <code>True</code> for all five <code>Test-Path</code> checks. Both ACR builds should
+            complete successfully, and the final image lines should use your value from
+            <code>$acrLoginServer</code>.
+          </p>
+        </div>
+
+        <div class="callout warning">
+          <strong>Troubleshooting note</strong>
+          <ul>
+            <li>If <code>kubectl top nodes</code> fails, Module 1 can still proceed, but HPA and VPA results may be blocked until metrics work.</li>
+            <li>If a <code>Test-Path</code> command returns <code>False</code>, go back to Step 1 and confirm your working folder.</li>
+            <li>If Azure commands fail, you can still complete Module 1 and much of Module 3 if VPA is already enabled, but Module 2 add-on enablement may require instructor help.</li>
+            <li>If <code>az acr show</code> or <code>az acr build</code> returns an authorization error, ask the instructor to verify your access to the pre-created ACR.</li>
+            <li>If a later pod shows <code>ImagePullBackOff</code>, confirm the manifest uses <code>$acrLoginServer</code> and ask the instructor to verify that the cluster has pull permission on the ACR.</li>
+          </ul>
+        </div>
+
+        <div class="callout info">
+          <strong>Checkpoint / question</strong>
+          <p>Which preflight command tells you whether the cluster is currently exposing resource metrics?</p>
+        </div>
+
+        <div class="actions">
+          <button class="button secondary previous" type="button">← Previous</button>
+          <button class="button next" type="button">Next →</button>
+        </div>
+      </section>
+
+      <section class="step" data-module="Module 1" data-title="Apply the governance namespace and LimitRange">
+        <div class="step-heading">
+          <span class="step-number">3</span>
+          <div>
+            <div class="module-chip">Module 1 · LimitRange and ResourceQuota</div>
+            <h2>Create the governance namespace and apply a LimitRange</h2>
+            <p class="lead">Start with per-container defaults and boundaries before you introduce a namespace-wide quota.</p>
+          </div>
+        </div>
+
+        <div class="section-grid">
+          <div class="section-card">
+            <h3>Objective</h3>
+            <p>Create the demo namespace and apply a LimitRange that sets default requests, default limits, and maximum allowed values.</p>
+          </div>
+          <div class="section-card">
+            <h3>Why this matters</h3>
+            <p>
+              A LimitRange helps platform teams establish safe defaults. It can fill in missing
+              resource requests and limits, and it can reject individual containers that ask for too much.
+            </p>
+          </div>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Create the namespace and inspect the label</div>
+          <pre><code>kubectl apply -f .\manifests\01-limit-ranges-resource-quotas\00-namespace.yaml
+kubectl get namespace $limitNs --show-labels</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Apply the LimitRange and inspect its policy</div>
+          <pre><code>kubectl apply -f .\manifests\01-limit-ranges-resource-quotas\10-limit-range.yaml
+kubectl describe limitrange container-resource-limits -n $limitNs</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="terms">
+          <div class="term">
+            <strong>LimitRange</strong>
+            <p>A namespace policy that sets default, minimum, or maximum resources for containers or pods.</p>
+          </div>
+          <div class="term">
+            <strong>Default request</strong>
+            <p>The amount of CPU or memory Kubernetes will inject when a developer does not specify a request.</p>
+          </div>
+          <div class="term">
+            <strong>Default limit</strong>
+            <p>The runtime cap Kubernetes will inject when a developer omits a limit.</p>
+          </div>
+          <div class="term">
+            <strong>Maximum</strong>
+            <p>The largest per-container value this namespace will admit.</p>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h3>Command explanation</h3>
+          <ul>
+            <li>The namespace manifest creates <code>aks-governance-demo</code> with a demo label.</li>
+            <li><code>kubectl describe limitrange</code> is the easiest way to read the effective defaults and max values.</li>
+            <li>In this demo, the important numbers are default request <code>100m / 64Mi</code>, default limit <code>300m / 128Mi</code>, and maximum <code>500m / 256Mi</code>.</li>
+          </ul>
+        </div>
+
+        <div class="callout expected">
+          <strong>Expected output / evidence</strong>
+          <p>
+            The namespace exists with the demo label. The LimitRange description shows default
+            requests of <code>100m</code> CPU and <code>64Mi</code> memory, default limits of
+            <code>300m</code> CPU and <code>128Mi</code> memory, and a maximum of
+            <code>500m</code> CPU and <code>256Mi</code> memory.
+          </p>
+        </div>
+
+        <div class="callout warning">
+          <strong>Troubleshooting note</strong>
+          <p>
+            If the namespace already exists from an earlier run, that is okay. If you want a fully
+            clean rerun, delete <code>$limitNs</code> before reapplying and wait until it is gone.
+          </p>
+        </div>
+
+        <div class="callout info">
+          <strong>Checkpoint / question</strong>
+          <p>Does a LimitRange control one container's settings, the entire namespace budget, or both?</p>
+        </div>
+
+        <div class="actions">
+          <button class="button secondary previous" type="button">← Previous</button>
+          <button class="button next" type="button">Next →</button>
+        </div>
+      </section>
+
+      <section class="step" data-module="Module 1" data-title="Show defaulted and rejected pods">
+        <div class="step-heading">
+          <span class="step-number">4</span>
+          <div>
+            <div class="module-chip">Module 1</div>
+            <h2>See the LimitRange inject defaults and reject an oversized pod</h2>
+            <p class="lead">Use one pod with no resources and one pod above the maximum to show both sides of the policy.</p>
+          </div>
+        </div>
+
+        <div class="section-grid">
+          <div class="section-card">
+            <h3>Objective</h3>
+            <p>Prove that Kubernetes can both supply missing resource settings and deny requests that exceed the policy.</p>
+          </div>
+          <div class="section-card">
+            <h3>Why this matters</h3>
+            <p>
+              This is a common governance pattern. Developers can omit small resource details safely,
+              but they cannot accidentally request values above the namespace maximum.
+            </p>
+          </div>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Create a pod with no explicit resources and inspect the injected values</div>
+          <pre><code>kubectl apply -f .\manifests\01-limit-ranges-resource-quotas\20-defaulted-pod.yaml
+kubectl wait --for=condition=Ready pod/defaulted-pod -n $limitNs --timeout=90s
+kubectl get pod defaulted-pod -n $limitNs -o jsonpath="{.spec.containers[0].resources}"</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Try to create a pod above the LimitRange maximum</div>
+          <pre><code>kubectl apply -f .\manifests\01-limit-ranges-resource-quotas\30-over-limit-pod.yaml</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="compare-grid">
+          <div class="compare-card">
+            <h3>Defaulted pod</h3>
+            <p>Because the manifest omitted resources, Kubernetes injects the LimitRange defaults during admission.</p>
+          </div>
+          <div class="compare-card">
+            <h3>Over-limit pod</h3>
+            <p>Because the manifest requests <code>600m</code> CPU and <code>300Mi</code> memory, the API server rejects it before it is created.</p>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h3>Command explanation</h3>
+          <ul>
+            <li><code>kubectl wait</code> pauses until the defaulted pod is actually Ready.</li>
+            <li>The JSONPath command reads the resources that ended up on the live pod spec.</li>
+            <li>The over-limit manifest is intentionally invalid for this namespace so you can see the admission error.</li>
+          </ul>
+        </div>
+
+        <div class="callout expected">
+          <strong>Expected output / evidence</strong>
+          <p>
+            The defaulted pod should become Ready and show requests of <code>100m / 64Mi</code> and
+            limits of <code>300m / 128Mi</code>. The oversized pod should be rejected with a
+            forbidden error because it exceeds the LimitRange maximum.
+          </p>
+        </div>
+
+        <div class="callout warning">
+          <strong>Troubleshooting note</strong>
+          <ul>
+            <li>If <code>kubectl wait</code> times out, run <code>kubectl get pods -n $limitNs</code> and <code>kubectl describe pod defaulted-pod -n $limitNs</code> to check for image pull problems.</li>
+            <li>If the oversized pod is created successfully, recheck that you applied the correct LimitRange to the correct namespace.</li>
+          </ul>
+        </div>
+
+        <div class="callout info">
+          <strong>Checkpoint / question</strong>
+          <p>What is the practical difference between “no resources were specified” and “resources were specified above the maximum”?</p>
+        </div>
+
+        <div class="actions">
+          <button class="button secondary previous" type="button">← Previous</button>
+          <button class="button next" type="button">Next →</button>
+        </div>
+      </section>
+
+      <section class="step" data-module="Module 1" data-title="Apply ResourceQuota and inspect FailedCreate events">
+        <div class="step-heading">
+          <span class="step-number">5</span>
+          <div>
+            <div class="module-chip">Module 1</div>
+            <h2>Apply a ResourceQuota and watch a Deployment hit the namespace budget</h2>
+            <p class="lead">Now shift from one container at a time to the total budget available inside the namespace.</p>
+          </div>
+        </div>
+
+        <div class="section-grid">
+          <div class="section-card">
+            <h3>Objective</h3>
+            <p>Show that a ResourceQuota limits aggregate namespace consumption, even when each individual pod is valid.</p>
+          </div>
+          <div class="section-card">
+            <h3>Why this matters</h3>
+            <p>
+              A namespace-wide budget helps teams share a cluster fairly. Even if every pod meets the
+              LimitRange, the namespace can still run out of allowed pods, CPU requests, memory requests, or limits.
+            </p>
+          </div>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Apply the ResourceQuota and inspect the budget</div>
+          <pre><code>kubectl apply -f .\manifests\01-limit-ranges-resource-quotas\40-resource-quota.yaml
+kubectl describe resourcequota namespace-compute-quota -n $limitNs</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Create a four-replica Deployment and inspect the result</div>
+          <pre><code>kubectl apply -f .\manifests\01-limit-ranges-resource-quotas\50-quota-workload.yaml
+kubectl get deployment,pods -n $limitNs -o wide
+kubectl describe resourcequota namespace-compute-quota -n $limitNs
+kubectl get events -n $limitNs --field-selector reason=FailedCreate --sort-by=.lastTimestamp</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="terms">
+          <div class="term">
+            <strong>ResourceQuota</strong>
+            <p>A namespace policy that caps total resource usage across all objects in that namespace.</p>
+          </div>
+          <div class="term">
+            <strong>FailedCreate event</strong>
+            <p>An event emitted when the Deployment controller tries to create a pod but the API server rejects it because the quota would be exceeded.</p>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h3>Command explanation</h3>
+          <ul>
+            <li>The quota allows only <code>3</code> total pods in the namespace.</li>
+            <li><code>defaulted-pod</code> already consumes one of those three pod slots.</li>
+            <li>The quota-workload Deployment asks for <code>4</code> replicas, but only two new pods fit before the namespace reaches its pod and compute budget.</li>
+            <li><code>kubectl get events</code> shows the controller trying to create more pods and being denied.</li>
+          </ul>
+        </div>
+
+        <div class="callout expected">
+          <strong>Expected output / evidence</strong>
+          <p>
+            The Deployment should remain around <code>2/4</code> ready replicas. The ResourceQuota
+            description should show the budget in use, and the <code>FailedCreate</code> events
+            should explain that the namespace exceeded its quota.
+          </p>
+        </div>
+
+        <div class="callout warning">
+          <strong>Troubleshooting note</strong>
+          <ul>
+            <li>If more than two workload pods appear, recheck whether <code>defaulted-pod</code> still exists and whether the ResourceQuota was applied successfully.</li>
+            <li>If you do not see events immediately, rerun the final event command. Controllers may need a short moment to retry and report the failure.</li>
+          </ul>
+        </div>
+
+        <div class="callout info">
+          <strong>Checkpoint / question</strong>
+          <p>Why can a Deployment manifest be valid on its own but still fail to create all requested replicas?</p>
+        </div>
+
+        <div class="section-card">
+          <h3>Module 1 knowledge check</h3>
+          <details>
+            <summary>Question 1: What problem does the LimitRange solve?</summary>
+            <p>It sets per-container defaults and boundaries, so missing resources can be filled in and oversized containers can be rejected.</p>
+          </details>
+          <details>
+            <summary>Question 2: What problem does the ResourceQuota solve?</summary>
+            <p>It caps total namespace consumption across pods, requests, and limits.</p>
+          </details>
+          <details>
+            <summary>Question 3: Why did the Deployment stop around 2/4 replicas?</summary>
+            <p>
+              Because <code>defaulted-pod</code> already used one of the three allowed pod slots, leaving room for only two more pods before the quota was exhausted.
+            </p>
+          </details>
+        </div>
+
+        <div class="actions">
+          <button class="button secondary previous" type="button">← Previous</button>
+          <button class="button next" type="button">Next →</button>
+        </div>
+      </section>
+
+      <section class="step" data-module="Module 2" data-title="Check or enable the VPA add-on">
+        <div class="step-heading">
+          <span class="step-number">6</span>
+          <div>
+            <div class="module-chip">Module 2 · Vertical Pod Autoscaler</div>
+            <h2>Clean up the governance namespace and verify the managed VPA add-on</h2>
+            <p class="lead">Before deploying the VPA demo workload, make sure the cluster actually exposes the VPA API.</p>
+          </div>
+        </div>
+
+        <div class="section-grid">
+          <div class="section-card">
+            <h3>Objective</h3>
+            <p>Remove the previous module's namespace and confirm whether the cluster already has VPA enabled.</p>
+          </div>
+          <div class="section-card">
+            <h3>Why this matters</h3>
+            <p>
+              The governance demo is done. VPA is a cluster-level feature, so students need to know
+              whether they can proceed immediately or whether an Azure control-plane change is required.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout danger">
+          <strong>Important permission note</strong>
+          <p>
+            If VPA is not already enabled, turning it on requires Azure permission to update the AKS
+            cluster. If you do not have that permission, ask the instructor or cluster owner for help.
+          </p>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Clean up Module 1 and reset the VPA namespace if needed</div>
+          <pre><code>kubectl delete namespace $limitNs --ignore-not-found=true
+kubectl delete namespace $vpaNs --ignore-not-found=true
+$vpaEnabled = az aks show --resource-group $rg --name $aksName --query "workloadAutoScalerProfile.verticalPodAutoscaler.enabled" -o tsv
+"VPA enabled: $vpaEnabled"</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Run this only if VPA is false or blank</div>
+          <pre><code>az aks update --resource-group $rg --name $aksName --enable-vpa</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Confirm that the VPA API exists in the cluster</div>
+          <pre><code>kubectl api-resources --api-group=autoscaling.k8s.io</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="section-card">
+          <h3>Command explanation</h3>
+          <ul>
+            <li>The cleanup command removes the previous namespace but does not affect the cluster itself.</li>
+            <li><code>$vpaEnabled</code> stores the cluster's current VPA setting so later steps can refer to it.</li>
+            <li>If the cluster update is needed, it is a one-time cluster action, not a per-namespace action.</li>
+            <li><code>kubectl api-resources</code> is your proof that the VPA resource type is installed and discoverable.</li>
+          </ul>
+        </div>
+
+        <div class="callout expected">
+          <strong>Expected output / evidence</strong>
+          <p>
+            If VPA is already enabled, the cluster query prints <code>true</code> and
+            <code>kubectl api-resources</code> lists <code>verticalpodautoscalers</code> or
+            <code>vpa</code>. If you had to enable it, give the cluster a short moment and rerun the API check.
+          </p>
+        </div>
+
+        <div class="callout warning">
+          <strong>Troubleshooting note</strong>
+          <ul>
+            <li>If the Azure update fails with authorization errors, stop and ask for help rather than guessing at permissions.</li>
+            <li>If <code>$vpaNs</code> is still Terminating from an earlier run, wait until the namespace is gone before deploying the workload in the next step.</li>
+            <li>If the update succeeds but the API check still looks empty, wait a minute and rerun the <code>kubectl api-resources</code> command.</li>
+          </ul>
+        </div>
+
+        <div class="callout info">
+          <strong>Checkpoint / question</strong>
+          <p>Why is checking the API resources a better proof than assuming VPA is ready because the Azure command succeeded?</p>
+        </div>
+
+        <div class="actions">
+          <button class="button secondary previous" type="button">← Previous</button>
+          <button class="button next" type="button">Next →</button>
+        </div>
+      </section>
+
+      <section class="step" data-module="Module 2" data-title="Deploy the oversized VPA workload">
+        <div class="step-heading">
+          <span class="step-number">7</span>
+          <div>
+            <div class="module-chip">Module 2</div>
+            <h2>Deploy a workload that intentionally requests more than it needs</h2>
+            <p class="lead">VPA is easiest to understand when the starting requests are obviously generous.</p>
+          </div>
+        </div>
+
+        <div class="section-grid">
+          <div class="section-card">
+            <h3>Objective</h3>
+            <p>Create the weather API workload with baseline requests of <code>200m</code> CPU and <code>256Mi</code> memory on each pod.</p>
+          </div>
+          <div class="section-card">
+            <h3>Why this matters</h3>
+            <p>
+              Kubernetes scheduling is based on requests, not actual live usage. Over-requesting can
+              waste cluster capacity even when the app is mostly idle.
+            </p>
+          </div>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Deploy the VPA demo workload and inspect the configured requests</div>
+          <pre><code>kubectl apply -f .\manifests\02-vertical-pod-autoscaler\00-namespace.yaml
+kubectl apply -f .\manifests\02-vertical-pod-autoscaler\10-workload.yaml
+kubectl rollout status deployment/weather-api -n $vpaNs --timeout=120s
+kubectl get pods -n $vpaNs -l app=weather-api -o custom-columns="POD:.metadata.name,CPU_REQUEST:.spec.containers[0].resources.requests.cpu,MEMORY_REQUEST:.spec.containers[0].resources.requests.memory"</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="terms">
+          <div class="term">
+            <strong>Request</strong>
+            <p>The amount Kubernetes reserves for scheduling purposes.</p>
+          </div>
+          <div class="term">
+            <strong>Limit</strong>
+            <p>The runtime ceiling. This demo keeps the limits unchanged while VPA focuses on requests.</p>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h3>Command explanation</h3>
+          <ul>
+            <li>The workload manifest creates two replicas of the weather API.</li>
+            <li>Each pod requests <code>200m</code> CPU and <code>256Mi</code> memory, with higher limits.</li>
+            <li>The custom-columns output makes the starting requests easy to compare with the later VPA recommendation.</li>
+          </ul>
+        </div>
+
+        <div class="callout expected">
+          <strong>Expected output / evidence</strong>
+          <p>
+            The Deployment should roll out successfully, and both pods should show requests of
+            <code>200m</code> CPU and <code>256Mi</code> memory.
+          </p>
+        </div>
+
+        <div class="callout warning">
+          <strong>Troubleshooting note</strong>
+          <ul>
+            <li>If rollout fails, inspect the namespace with <code>kubectl get pods -n $vpaNs</code> and <code>kubectl describe pod -n $vpaNs &lt;pod-name&gt;</code>.</li>
+            <li>If the namespace already had old objects, delete <code>$vpaNs</code>, wait until it is gone, and rerun this step.</li>
+          </ul>
+        </div>
+
+        <div class="callout info">
+          <strong>Checkpoint / question</strong>
+          <p>Why can an over-requested workload look healthy even when it is using cluster capacity inefficiently?</p>
+        </div>
+
+        <div class="actions">
+          <button class="button secondary previous" type="button">← Previous</button>
+          <button class="button next" type="button">Next →</button>
+        </div>
+      </section>
+
+      <section class="step" data-module="Module 2" data-title="Create VPA in Off mode and read the recommendation">
+        <div class="step-heading">
+          <span class="step-number">8</span>
+          <div>
+            <div class="module-chip">Module 2</div>
+            <h2>Create the VPA in recommendation-only mode and inspect its advice</h2>
+            <p class="lead">Start safely: let VPA recommend without changing the running pods yet.</p>
+          </div>
+        </div>
+
+        <div class="section-grid">
+          <div class="section-card">
+            <h3>Objective</h3>
+            <p>Apply a VPA object in <code>Off</code> mode and learn how to read its recommendation fields.</p>
+          </div>
+          <div class="section-card">
+            <h3>Why this matters</h3>
+            <p>
+              Recommendation-first is the safest way to start with VPA. It gives you data without
+              changing pods or risking surprise restarts.
+            </p>
+          </div>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Apply the VPA in Off mode</div>
+          <pre><code>kubectl apply -f .\manifests\02-vertical-pod-autoscaler\20-vpa-off.yaml
+kubectl get vpa -n $vpaNs</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Read the recommendation when it becomes available</div>
+          <pre><code>kubectl describe vpa weather-api-vpa -n $vpaNs
+kubectl get vpa weather-api-vpa -n $vpaNs -o jsonpath="{.status.recommendation}"</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="compare-grid">
+          <div class="compare-card">
+            <h3>Off mode</h3>
+            <p>The VPA object collects data and computes recommendations, but it does not evict or recreate pods.</p>
+          </div>
+          <div class="compare-card">
+            <h3>What to look for</h3>
+            <p>Lower bound, target, upper bound, and uncapped target. The target is usually the main starting point for discussion.</p>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h3>Command explanation</h3>
+          <ul>
+            <li>The checked-in VPA policy controls CPU and memory <strong>requests only</strong>.</li>
+            <li>Its allowed range is intentionally constrained between <code>25m / 32Mi</code> and <code>100m / 128Mi</code>.</li>
+            <li><code>kubectl describe vpa</code> is the most readable view when the recommendation is populated.</li>
+            <li>The JSONPath output is useful when you want the raw recommendation object.</li>
+            <li>Do not combine VPA and HPA on the same CPU or memory signal unless you have designed that interaction very carefully.</li>
+          </ul>
+        </div>
+
+        <div class="callout expected">
+          <strong>Expected output / evidence</strong>
+          <p>
+            At first, the recommendation may be missing or incomplete. After VPA has enough metrics
+            history, the target recommendation should eventually be lower than the original
+            <code>200m</code> CPU request for this lightweight service.
+          </p>
+        </div>
+
+        <div class="callout warning">
+          <strong>Troubleshooting note</strong>
+          <ul>
+            <li>If the recommendation is empty, wait a few minutes and rerun the describe command. That delay is normal.</li>
+            <li>For real production decisions, treat short lab data as a demonstration only. Representative traffic over a much longer window is more trustworthy.</li>
+          </ul>
+        </div>
+
+        <div class="callout info">
+          <strong>Checkpoint / question</strong>
+          <p>Why is <code>Off</code> mode usually a safer first step than immediately enabling automatic pod recreation?</p>
+        </div>
+
+        <div class="actions">
+          <button class="button secondary previous" type="button">← Previous</button>
+          <button class="button next" type="button">Next →</button>
+        </div>
+      </section>
+
+      <section class="step" data-module="Module 2" data-title="Optional Recreate behavior and verification">
+        <div class="step-heading">
+          <span class="step-number">9</span>
+          <div>
+            <div class="module-chip">Module 2</div>
+            <h2>Optionally switch to Recreate mode and verify the new live pod requests</h2>
+            <p class="lead">This is the only step in the lab that intentionally changes the running pods based on VPA output.</p>
+          </div>
+        </div>
+
+        <div class="section-grid">
+          <div class="section-card">
+            <h3>Objective</h3>
+            <p>Observe how VPA can replace pods so the newly created pods receive recommended requests at admission time.</p>
+          </div>
+          <div class="section-card">
+            <h3>Why this matters</h3>
+            <p>
+              VPA can help rightsize workloads, but applying those changes can disrupt running pods.
+              That is why teams usually evaluate recommendations first and automate second.
+            </p>
+          </div>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Record the current pods, enable Recreate mode, and watch for new pod names</div>
+          <pre><code>kubectl get pods -n $vpaNs -l app=weather-api
+kubectl apply -f .\manifests\02-vertical-pod-autoscaler\30-vpa-recreate.yaml
+kubectl get pods -n $vpaNs -l app=weather-api --watch</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">After new pod names appear, press Ctrl+C and compare live pods with the Deployment template</div>
+          <pre><code>kubectl get pods -n $vpaNs -l app=weather-api -o custom-columns="POD:.metadata.name,AGE:.metadata.creationTimestamp,CPU_REQUEST:.spec.containers[0].resources.requests.cpu,MEMORY_REQUEST:.spec.containers[0].resources.requests.memory"
+kubectl get deployment weather-api -n $vpaNs -o jsonpath="{.spec.template.spec.containers[0].resources.requests}"</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="compare-grid">
+          <div class="compare-card">
+            <h3>Live pods</h3>
+            <p>The new pods should show requests inside the VPA policy bounds rather than the original oversized values.</p>
+          </div>
+          <div class="compare-card">
+            <h3>Deployment template</h3>
+            <p>The Deployment object itself still shows the original requests. The VPA admission controller mutates the new pods as they are created.</p>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h3>Command explanation</h3>
+          <ul>
+            <li><code>Recreate</code> allows the VPA updater to evict and replace pods when their current requests differ materially from the recommendation.</li>
+            <li>The demo policy deliberately makes the starting requests above the VPA maximum so replacement becomes visible in a short lab.</li>
+            <li>Watching the pods helps you confirm that names or ages changed.</li>
+            <li>The updater replaces pods gradually, one pod at a time, rather than restarting everything at once.</li>
+          </ul>
+        </div>
+
+        <div class="callout expected">
+          <strong>Expected output / evidence</strong>
+          <p>
+            You should eventually see new pod names or newer pod ages. The live pod requests should
+            fall within the VPA policy range, while the Deployment template still shows the original
+            <code>200m</code> CPU and <code>256Mi</code> memory requests.
+          </p>
+        </div>
+
+        <div class="callout warning">
+          <strong>Troubleshooting note</strong>
+          <ul>
+            <li>The AKS VPA updater evaluates periodically, roughly around once per minute, so do not expect immediate pod replacement.</li>
+            <li>If nothing changes after a few minutes, rerun <code>kubectl describe vpa weather-api-vpa -n $vpaNs</code> and confirm a recommendation exists.</li>
+            <li>If you do not want any disruption, skip this step and move on. The recommendation-only lesson still stands.</li>
+          </ul>
+        </div>
+
+        <div class="callout info">
+          <strong>Checkpoint / question</strong>
+          <p>Why is it useful to compare live pod requests with the Deployment template after switching to Recreate mode?</p>
+        </div>
+
+        <div class="section-card">
+          <h3>Module 2 knowledge check</h3>
+          <details>
+            <summary>Question 1: What is the main difference between Off and Recreate mode?</summary>
+            <p>Off mode recommends only. Recreate mode can evict and replace pods so they come back with VPA-selected requests.</p>
+          </details>
+          <details>
+            <summary>Question 2: Why might the recommendation take time to appear?</summary>
+            <p>Because VPA needs metrics history before it can make a useful recommendation.</p>
+          </details>
+          <details>
+            <summary>Question 3: Why might live pods show different requests than the Deployment template?</summary>
+            <p>Because the VPA admission controller mutates new pods at creation time while the Deployment spec remains unchanged.</p>
+          </details>
+        </div>
+
+        <div class="actions">
+          <button class="button secondary previous" type="button">← Previous</button>
+          <button class="button next" type="button">Next →</button>
+        </div>
+      </section>
+
+      <section class="step" data-module="Module 3" data-title="Prepare for HPA and deploy the workload">
+        <div class="step-heading">
+          <span class="step-number">10</span>
+          <div>
+            <div class="module-chip">Module 3 · Horizontal Pod Autoscaler</div>
+            <h2>Clean up the VPA workload, confirm metrics, then deploy the HPA baseline</h2>
+            <p class="lead">HPA needs metrics, realistic requests, and a clean enough cluster to show scaling clearly.</p>
+          </div>
+        </div>
+
+        <div class="section-grid">
+          <div class="section-card">
+            <h3>Objective</h3>
+            <p>Remove the VPA demo namespace, confirm metrics are available, then deploy one CPU-demo replica and attach an HPA.</p>
+          </div>
+          <div class="section-card">
+            <h3>Why this matters</h3>
+            <p>
+              HPA scales based on current observed demand. In this demo it targets average CPU
+              utilization as a percentage of the pod's requested CPU, not the pod's limit.
+            </p>
+          </div>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Clean up Module 2 and confirm the Metrics API is ready</div>
+          <pre><code>kubectl delete namespace $vpaNs --ignore-not-found=true
+kubectl delete namespace $hpaNs --ignore-not-found=true
+kubectl top nodes</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Deploy the HPA demo workload and inspect the baseline</div>
+          <pre><code>kubectl apply -f .\manifests\03-horizontal-pod-autoscaler\00-namespace.yaml
+kubectl apply -f .\manifests\03-horizontal-pod-autoscaler\10-workload.yaml
+kubectl rollout status deployment/cpu-demo -n $hpaNs --timeout=120s
+kubectl get deployment,pods -n $hpaNs -o wide
+kubectl top pods -n $hpaNs</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Create the HPA and inspect its initial status</div>
+          <pre><code>kubectl apply -f .\manifests\03-horizontal-pod-autoscaler\20-hpa.yaml
+kubectl describe hpa cpu-demo -n $hpaNs</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="terms">
+          <div class="term">
+            <strong>HPA</strong>
+            <p>The Horizontal Pod Autoscaler changes the number of replicas on a workload.</p>
+          </div>
+          <div class="term">
+            <strong>50% of request</strong>
+            <p>In this demo, the pod request is <code>50m</code> CPU, so the target is about <code>25m</code> average CPU per pod.</p>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h3>Command explanation</h3>
+          <ul>
+            <li>The baseline workload starts with one replica.</li>
+            <li>The pod requests <code>50m</code> CPU and limits at <code>250m</code>.</li>
+            <li>The HPA ranges from <code>1</code> to <code>6</code> replicas and targets <code>50%</code> average CPU utilization.</li>
+            <li>The checked-in HPA policy allows scale-up by up to <code>2</code> pods every <code>30</code> seconds and uses a <code>60</code>-second scale-down stabilization window.</li>
+            <li>Initial HPA CPU status may briefly show <code>&lt;unknown&gt;</code> until fresh metrics arrive.</li>
+          </ul>
+        </div>
+
+        <div class="callout expected">
+          <strong>Expected output / evidence</strong>
+          <p>
+            You should see one <code>cpu-demo</code> pod and an HPA named <code>cpu-demo</code>.
+            The HPA description should show min and max replicas, and it may briefly show
+            <code>&lt;unknown&gt;</code> for current CPU until metrics catch up.
+          </p>
+        </div>
+
+        <div class="callout warning">
+          <strong>Troubleshooting note</strong>
+          <ul>
+            <li>If <code>kubectl top pods -n $hpaNs</code> says metrics are not available yet, wait about 60 seconds and rerun it.</li>
+            <li>If the HPA description shows <code>&lt;unknown&gt;</code> initially, that is normal on a newly created workload.</li>
+            <li>If <code>$vpaNs</code> or <code>$hpaNs</code> is still Terminating from an earlier run, wait until the namespace is fully removed before redeploying.</li>
+          </ul>
+        </div>
+
+        <div class="callout info">
+          <strong>Checkpoint / question</strong>
+          <p>Why does HPA care about CPU request more than CPU limit in this demo?</p>
+        </div>
+
+        <div class="actions">
+          <button class="button secondary previous" type="button">← Previous</button>
+          <button class="button next" type="button">Next →</button>
+        </div>
+      </section>
+
+      <section class="step" data-module="Module 3" data-title="Generate load and watch scale up">
+        <div class="step-heading">
+          <span class="step-number">11</span>
+          <div>
+            <div class="module-chip">Module 3</div>
+            <h2>Start the load generator and watch the HPA scale out</h2>
+            <p class="lead">Create steady in-cluster demand so the HPA has a clear reason to add replicas.</p>
+          </div>
+        </div>
+
+        <div class="section-grid">
+          <div class="section-card">
+            <h3>Objective</h3>
+            <p>Push CPU above the target long enough for the HPA to increase the Deployment replica count.</p>
+          </div>
+          <div class="section-card">
+            <h3>Why this matters</h3>
+            <p>
+              HPA works best when load is sustained and measurable. This demo uses an in-cluster load
+              generator so the requests naturally flow through the Kubernetes Service to the target pods.
+            </p>
+          </div>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Start the load generator and wait for it to become Ready</div>
+          <pre><code>kubectl apply -f .\manifests\03-horizontal-pod-autoscaler\30-load-generator.yaml
+kubectl rollout status deployment/load-generator -n $hpaNs --timeout=120s</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Watch the HPA change over time</div>
+          <pre><code>kubectl get hpa cpu-demo -n $hpaNs --watch</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">After the replica count grows, press Ctrl+C and inspect the pods and their CPU</div>
+          <pre><code>kubectl get pods -n $hpaNs -l app=cpu-demo -o wide
+kubectl top pods -n $hpaNs -l app=cpu-demo</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="section-card">
+          <h3>Command explanation</h3>
+          <ul>
+            <li>The load generator uses the checked-in manifest and sends sustained requests to the <code>cpu-demo</code> Service.</li>
+            <li>It opens fresh HTTP connections so traffic can be balanced across Service endpoints instead of being pinned to one long-lived connection.</li>
+            <li><code>kubectl get hpa --watch</code> is the clearest live view of scaling decisions during this demo.</li>
+            <li>When new pods are added, traffic is shared and the average CPU utilization should move back toward the target.</li>
+          </ul>
+        </div>
+
+        <div class="callout expected">
+          <strong>Expected output / evidence</strong>
+          <p>
+            Within roughly 30 to 90 seconds, the HPA should usually raise the replica count above
+            one. After you exit the watch, <code>kubectl get pods</code> should show multiple
+            <code>cpu-demo</code> pods.
+          </p>
+        </div>
+
+        <div class="callout warning">
+          <strong>Troubleshooting note</strong>
+          <ul>
+            <li>If the HPA does not scale right away, give it more time. Metrics collection and HPA decisions are periodic, not instant.</li>
+            <li>If the load generator rollout fails, describe its pod to inspect image pull or scheduling problems.</li>
+            <li>If pod CPU values still do not appear, fix the metrics pipeline first; HPA depends on it.</li>
+          </ul>
+        </div>
+
+        <div class="callout info">
+          <strong>Checkpoint / question</strong>
+          <p>Why is sustained demand more useful than a quick one-second spike when demonstrating HPA?</p>
+        </div>
+
+        <div class="actions">
+          <button class="button secondary previous" type="button">← Previous</button>
+          <button class="button next" type="button">Next →</button>
+        </div>
+      </section>
+
+      <section class="step" data-module="Wrap-up" data-title="Scale down, clean up, and review the summary">
+        <div class="step-heading">
+          <span class="step-number">12</span>
+          <div>
+            <div class="module-chip">Wrap-up</div>
+            <h2>Stop the load, watch scale-down, then clean up all demo namespaces</h2>
+            <p class="lead">Finish by proving that HPA can scale back in and by leaving the cluster clean for the next student.</p>
+          </div>
+        </div>
+
+        <div class="section-grid">
+          <div class="section-card">
+            <h3>Objective</h3>
+            <p>Remove the demand source, observe HPA scale-down behavior, and clean up every namespace used in the lab.</p>
+          </div>
+          <div class="section-card">
+            <h3>Why this matters</h3>
+            <p>
+              Good demos end cleanly. Scale-down is intentionally slower than scale-up, and student
+              cleanup should remove only the demo namespaces, not cluster-level features like the VPA add-on.
+            </p>
+          </div>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Stop the load and watch the HPA scale down</div>
+          <pre><code>kubectl delete deployment load-generator -n $hpaNs
+kubectl get hpa cpu-demo -n $hpaNs --watch</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">After the replica count falls back, press Ctrl+C and inspect the HPA one last time</div>
+          <pre><code>kubectl describe hpa cpu-demo -n $hpaNs
+kubectl get deployment cpu-demo -n $hpaNs
+kubectl get pods -n $hpaNs -l app=cpu-demo -o wide</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="command-card">
+          <div class="command-label">Final student cleanup</div>
+          <pre><code>kubectl delete namespace $limitNs --ignore-not-found=true
+kubectl delete namespace $vpaNs --ignore-not-found=true
+kubectl delete namespace $hpaNs --ignore-not-found=true</code></pre>
+          <button class="copy" type="button">Copy</button>
+        </div>
+
+        <div class="section-card">
+          <h3>Command explanation</h3>
+          <ul>
+            <li>Deleting the load generator removes the sustained CPU demand.</li>
+            <li>HPA scale-down is conservative and uses a stabilization window, so it may take a few minutes to return to one replica.</li>
+            <li>The final cleanup removes the three demo namespaces only. It does not disable the cluster-level VPA add-on.</li>
+          </ul>
+        </div>
+
+        <div class="callout expected">
+          <strong>Expected output / evidence</strong>
+          <p>
+            HPA should eventually move back toward its minimum replica count. The cleanup commands
+            should start namespace deletion for <code>aks-governance-demo</code>,
+            <code>aks-vpa-demo</code>, and <code>aks-hpa-demo</code>.
+          </p>
+        </div>
+
+        <div class="callout warning">
+          <strong>Troubleshooting note</strong>
+          <ul>
+            <li>Scale-down may take several minutes because the HPA waits for metrics to fall and for the stabilization window to expire.</li>
+            <li>If a namespace stays in <code>Terminating</code>, inspect remaining objects or finalizers before retrying the lab.</li>
+            <li>If you enabled VPA earlier, leave it enabled unless the cluster owner tells you otherwise.</li>
+          </ul>
+        </div>
+
+        <div class="callout info">
+          <strong>Checkpoint / question</strong>
+          <p>Why is the correct student cleanup “delete the namespaces” rather than “undo every cluster-level feature change”?</p>
+        </div>
+
+        <div class="section-card">
+          <h3>Module 3 knowledge check</h3>
+          <details>
+            <summary>Question 1: What signal tells the HPA to add replicas in this demo?</summary>
+            <p>Average CPU utilization across ready pods, measured as a percentage of each pod's CPU request.</p>
+          </details>
+          <details>
+            <summary>Question 2: Why can scale-down feel slower than scale-up?</summary>
+            <p>Because HPA uses fresh metrics plus a stabilization window to avoid flapping.</p>
+          </details>
+          <details>
+            <summary>Question 3: What is the difference between VPA and HPA in one sentence?</summary>
+            <p>VPA changes or recommends per-pod CPU and memory requests; HPA changes the number of pod replicas.</p>
+          </details>
+        </div>
+
+        <div class="section-card">
+          <h3>Final summary matrix</h3>
+          <div class="matrix-wrap">
+            <table class="matrix">
+              <thead>
+                <tr>
+                  <th>Concept</th>
+                  <th>Main command or object</th>
+                  <th>Best question answered</th>
+                  <th>Expected lab outcome</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>LimitRange</td>
+                  <td><code>kubectl describe limitrange</code></td>
+                  <td>What defaults and per-container maximums apply in this namespace?</td>
+                  <td>Missing resources are defaulted; oversized requests are rejected.</td>
+                </tr>
+                <tr>
+                  <td>ResourceQuota</td>
+                  <td><code>kubectl describe resourcequota</code><br><code>kubectl get events --field-selector reason=FailedCreate</code></td>
+                  <td>Has this namespace used up its total pod or compute budget?</td>
+                  <td>A four-replica Deployment is admitted only partially because the namespace quota is exhausted.</td>
+                </tr>
+                <tr>
+                  <td>VPA Off mode</td>
+                  <td><code>kubectl describe vpa</code></td>
+                  <td>What requests does VPA recommend without changing the live pods yet?</td>
+                  <td>Recommendation fields appear after metrics history builds.</td>
+                </tr>
+                <tr>
+                  <td>VPA Recreate mode</td>
+                  <td><code>kubectl get pods --watch</code></td>
+                  <td>What happens when VPA is allowed to apply its recommendation?</td>
+                  <td>Pods are replaced and come back with VPA-selected requests inside the configured policy bounds.</td>
+                </tr>
+                <tr>
+                  <td>HPA</td>
+                  <td><code>kubectl describe hpa</code><br><code>kubectl get hpa --watch</code></td>
+                  <td>Should the workload run more or fewer replicas based on current CPU demand?</td>
+                  <td>Replicas scale above one under load and return toward one after the load stops.</td>
+                </tr>
+                <tr>
+                  <td>Metrics API</td>
+                  <td><code>kubectl top nodes</code><br><code>kubectl top pods</code></td>
+                  <td>Are current CPU and memory metrics available for autoscaling and inspection?</td>
+                  <td>Fresh resource values appear after a short delay for new pods.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="button secondary previous" type="button">← Previous</button>
+          <button class="button" id="restart" type="button">Restart lab ↺</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const steps = [...document.querySelectorAll(".step")];
+    const nav = document.getElementById("nav");
+    const bar = document.getElementById("bar");
+    const progressText = document.getElementById("progress-text");
+    let current = 0;
+
+    let activeModule = "";
+    steps.forEach((step, index) => {
+      if (step.dataset.module !== activeModule) {
+        activeModule = step.dataset.module;
+        const heading = document.createElement("div");
+        heading.className = "module-label";
+        heading.textContent = activeModule;
+        nav.appendChild(heading);
+      }
+
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "nav-button";
+      button.innerHTML = `<span class="nav-number">${index + 1}</span><span>${step.dataset.title}</span>`;
+      button.addEventListener("click", () => show(index));
+      nav.appendChild(button);
+    });
+
+    function show(index) {
+      current = Math.max(0, Math.min(index, steps.length - 1));
+      steps.forEach((step, i) => step.classList.toggle("active", i === current));
+
+      const navButtons = [...nav.querySelectorAll(".nav-button")];
+      navButtons.forEach((button, i) => {
+        button.classList.toggle("active", i === current);
+        button.classList.toggle("complete", i < current);
+      });
+
+      progressText.textContent = `Step ${current + 1} of ${steps.length}`;
+      bar.style.width = `${((current + 1) / steps.length) * 100}%`;
+      history.replaceState(null, "", `#step-${current + 1}`);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    document.querySelectorAll(".next").forEach((button) => {
+      button.addEventListener("click", () => show(current + 1));
+    });
+
+    document.querySelectorAll(".previous").forEach((button) => {
+      button.addEventListener("click", () => show(current - 1));
+    });
+
+    document.getElementById("restart").addEventListener("click", () => show(0));
+
+    async function copyText(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+      }
+
+      const area = document.createElement("textarea");
+      area.value = text;
+      area.style.position = "fixed";
+      area.style.opacity = "0";
+      document.body.appendChild(area);
+      area.select();
+      document.execCommand("copy");
+      area.remove();
+    }
+
+    document.querySelectorAll(".copy").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const original = button.textContent;
+        try {
+          await copyText(button.parentElement.querySelector("code").textContent);
+          button.textContent = "Copied";
+        } catch {
+          button.textContent = "Copy failed";
+        }
+        setTimeout(() => {
+          button.textContent = original;
+        }, 1400);
+      });
+    });
+
+    const requested = Number.parseInt(window.location.hash.replace("#step-", ""), 10);
+    show(Number.isInteger(requested) ? requested - 1 : 0);
+  </script>
+</body>
+</html>

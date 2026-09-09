@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-compute-quota
+  namespace: aks-governance-demo
+spec:
+  hard:
+    pods: "3"
+    requests.cpu: 300m
+    requests.memory: 192Mi
+    limits.cpu: 900m
+    limits.memory: 384Mi
+
